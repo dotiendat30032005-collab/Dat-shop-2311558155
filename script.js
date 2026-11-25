@@ -1,5 +1,5 @@
 // ==========================================================================
-// ĐẠT XỨ DỪA – LOGIC GIỎ HÀNG LOCALSTORAGE, BỘ LỌC & ĐẶT HÀNG COD
+// ĐẠT XỨ DỪA – LOGIC GIỎ HÀNG LOCALSTORAGE, BỘ LỌC & ĐẶT HÀNG COD FIRESTORE
 // ==========================================================================
 
 (function () {
@@ -9,12 +9,76 @@
   const FREE_SHIPPING_THRESHOLD = 300000;
   const STANDARD_SHIPPING_FEE = 25000;
 
+  // Cấu hình Firebase Web App (gói Spark miễn phí, không bật Analytics/Gemini)
+  const FIREBASE_SDK_VERSION = "11.1.0";
+  const FIREBASE_APP_CDN =
+    "https://www.gstatic.com/firebasejs/" + FIREBASE_SDK_VERSION + "/firebase-app.js";
+  const FIREBASE_FIRESTORE_CDN =
+    "https://www.gstatic.com/firebasejs/" + FIREBASE_SDK_VERSION + "/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCkGSZ-Cv_SKTPQqHcXHOqM5oxo0XeNZvY",
+    authDomain: "dat-shop-2311558155-7b435.firebaseapp.com",
+    projectId: "dat-shop-2311558155-7b435",
+    storageBucket: "dat-shop-2311558155-7b435.firebasestorage.app",
+    messagingSenderId: "712003368651",
+    appId: "1:712003368651:web:d3e006194d5a41daf28d4e"
+  };
+
+  let firestoreContextPromise = null;
+  let isSubmittingOrder = false;
+
   const products = Array.isArray(window.PRODUCTS) ? window.PRODUCTS : [];
   const categories = Array.isArray(window.PRODUCT_CATEGORIES) ? window.PRODUCT_CATEGORIES : [];
 
   let activeCategory = "all";
   let cart = loadCartFromStorage();
   let toastTimer = null;
+
+  // Khởi tạo kết nối Cloud Firestore qua Firebase JS SDK CDN
+  function getFirestoreContext() {
+    if (!firestoreContextPromise) {
+      firestoreContextPromise = Promise.all([
+        import(FIREBASE_APP_CDN),
+        import(FIREBASE_FIRESTORE_CDN)
+      ])
+        .then(function (modules) {
+          const firebaseAppMod = modules[0];
+          const firestoreMod = modules[1];
+          const app =
+            firebaseAppMod.getApps().length > 0
+              ? firebaseAppMod.getApp()
+              : firebaseAppMod.initializeApp(firebaseConfig);
+          const db = firestoreMod.getFirestore(app);
+          return { db: db, firestoreMod: firestoreMod };
+        })
+        .catch(function (err) {
+          firestoreContextPromise = null;
+          throw err;
+        });
+    }
+    return firestoreContextPromise;
+  }
+
+  async function saveOrderToFirestore(orderCode, orderData) {
+    const timeoutPromise = new Promise(function (_, reject) {
+      window.setTimeout(function () {
+        reject(new Error("Quá thời gian kết nối máy chủ cơ sở dữ liệu."));
+      }, 15000);
+    });
+
+    const writePromise = (async function () {
+      const ctx = await getFirestoreContext();
+      const orderRef = ctx.firestoreMod.doc(ctx.db, "donhang", orderCode);
+      const payload = Object.assign({}, orderData, {
+        ngayTao: ctx.firestoreMod.serverTimestamp()
+      });
+      await ctx.firestoreMod.setDoc(orderRef, payload);
+      return orderCode;
+    })();
+
+    return Promise.race([writePromise, timeoutPromise]);
+  }
 
   // Định dạng tiền tệ tiếng Việt chuẩn dạng "120.000đ"
   function formatVND(amount) {
@@ -265,7 +329,7 @@
     const subtotalEl = document.getElementById("subtotal-amount");
     const shippingEl = document.getElementById("shipping-amount");
     const totalEl = document.getElementById("total-amount");
-    const btnTotalEl = document.getElementById("btn-total-amount");
+    const submitBtn = document.getElementById("submit-order-btn");
     const freeshipTextEl = document.getElementById("freeship-text");
     const freeshipFillEl = document.getElementById("freeship-bar-fill");
     const mobileBar = document.getElementById("mobile-cart-bar");
@@ -406,7 +470,12 @@
       }
     }
     if (totalEl) totalEl.textContent = formatVND(totals.total);
-    if (btnTotalEl) btnTotalEl.textContent = formatVND(totals.total);
+    if (submitBtn && !isSubmittingOrder) {
+      submitBtn.innerHTML =
+        'Xác nhận đặt hàng COD (<span id="btn-total-amount">' +
+        formatVND(totals.total) +
+        "</span>)";
+    }
 
     if (mobileBar && mobileCount && mobileTotal) {
       if (totals.totalItems > 0) {
@@ -419,7 +488,7 @@
     }
   }
 
-  // ======================== KIỂM TRA HỢP LỆ & ĐẶT HÀNG ========================
+  // ======================== KIỂM TRA HỢP LỆ & ĐẶT HÀNG FIRESTORE ========================
   function isValidVietnamPhone(rawPhone) {
     const digits = rawPhone.replace(/[\s.\-()]/g, "");
     return /^(0[35789]\d{8}|02\d{8,9})$/.test(digits);
@@ -460,8 +529,35 @@
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, "0");
     const dd = String(now.getDate()).padStart(2, "0");
-    const rand = Math.floor(1000 + Math.random() * 9000);
+    const rand = Math.floor(100000 + Math.random() * 900000);
     return "DXD-" + yy + mm + dd + "-" + rand;
+  }
+
+  function buildOrderItemsSnapshot() {
+    const items = [];
+    cart.forEach(function (entry) {
+      const product = findProduct(entry.productId);
+      if (!product) return;
+      items.push({
+        id: product.id,
+        tenSanPham: product.name,
+        donGia: product.price,
+        soLuong: entry.quantity,
+        thanhTien: product.price * entry.quantity
+      });
+    });
+    return items;
+  }
+
+  function translateFirestoreError(err) {
+    const code = err && err.code ? String(err.code) : "";
+    if (code === "permission-denied") {
+      return "Hệ thống từ chối quyền ghi đơn hàng (permission-denied). Vui lòng báo cửa hàng kiểm tra lại cấu hình bảo mật.";
+    }
+    if (code === "unavailable" || code === "deadline-exceeded") {
+      return "Không thể kết nối đến máy chủ lưu đơn hàng. Vui lòng kiểm tra kết nối mạng và thử lại.";
+    }
+    return "Không thể gửi đơn hàng lên hệ thống. Vui lòng kiểm tra kết nối mạng và thử lại sau ít phút.";
   }
 
   function setupCheckoutForm() {
@@ -469,7 +565,9 @@
     const nameInput = document.getElementById("customer-name");
     const phoneInput = document.getElementById("customer-phone");
     const addressInput = document.getElementById("customer-address");
+    const noteInput = document.getElementById("customer-note");
     const consentInput = document.getElementById("consent-checkbox");
+    const submitBtn = document.getElementById("submit-order-btn");
 
     const nameErr = document.getElementById("error-customer-name");
     const phoneErr = document.getElementById("error-customer-phone");
@@ -508,8 +606,9 @@
       });
     }
 
-    form.addEventListener("submit", function (event) {
+    form.addEventListener("submit", async function (event) {
       event.preventDefault();
+      if (isSubmittingOrder) return;
 
       const totals = calculateTotals();
       if (totals.totalItems === 0) {
@@ -525,6 +624,7 @@
       const nameVal = nameInput ? nameInput.value.trim() : "";
       const phoneVal = phoneInput ? phoneInput.value.trim() : "";
       const addressVal = addressInput ? addressInput.value.trim() : "";
+      const noteVal = noteInput ? noteInput.value.trim() : "";
       const consentChecked = consentInput ? consentInput.checked : false;
 
       let firstInvalidEl = null;
@@ -604,11 +704,51 @@
 
       const orderCode = generateOrderCode();
       const finalTotal = formatVND(totals.total);
+      const orderPayload = {
+        maDonHang: orderCode,
+        hoTen: nameVal,
+        soDienThoai: phoneVal,
+        diaChi: addressVal,
+        ghiChu: noteVal,
+        phuongThucThanhToan: "COD",
+        dongYSuDungThongTin: true,
+        danhSachMon: buildOrderItemsSnapshot(),
+        tongSoLuong: totals.totalItems,
+        tamTinh: totals.subtotal,
+        phiGiaoHang: totals.shippingFee,
+        tongThanhToan: totals.total,
+        trangThai: "cho_xac_nhan",
+        thoiGianTaoISO: new Date().toISOString()
+      };
 
-      clearCart();
-      form.reset();
+      isSubmittingOrder = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "⏳ Đang lưu đơn hàng lên hệ thống...";
+      }
 
-      openSuccessModal(orderCode, nameVal, phoneVal, finalTotal);
+      try {
+        await saveOrderToFirestore(orderCode, orderPayload);
+        isSubmittingOrder = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+        }
+        clearCart();
+        form.reset();
+        openSuccessModal(orderCode, nameVal, phoneVal, finalTotal);
+      } catch (err) {
+        isSubmittingOrder = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+        }
+        renderCart();
+        if (errorBanner) {
+          errorBanner.dataset.reason = "firestore-error";
+          errorBanner.textContent = translateFirestoreError(err);
+          errorBanner.hidden = false;
+          errorBanner.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
     });
   }
 
@@ -640,7 +780,7 @@
       thankEl.textContent =
         "Cảm ơn " +
         receiverName +
-        " đã đặt đặc sản tại Đạt Xứ Dừa! Đơn hàng thanh toán khi nhận hàng (COD) của bạn đã được ghi nhận.";
+        " đã đặt đặc sản tại Đạt Xứ Dừa! Đơn hàng COD của bạn đã được lưu vào hệ thống cửa hàng.";
     }
 
     if (modal) {
@@ -678,5 +818,7 @@
     renderCart();
     setupCheckoutForm();
     setupModalEvents();
+    // Khởi tạo sẵn kết nối Firestore CDN trong nền để đặt hàng nhanh hơn
+    getFirestoreContext().catch(function () {});
   });
 })();
