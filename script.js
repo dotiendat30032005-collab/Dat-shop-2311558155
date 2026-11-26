@@ -1,5 +1,5 @@
 // ==========================================================================
-// ĐẠT XỨ DỪA – LOGIC GIỎ HÀNG LOCALSTORAGE, BỘ LỌC & ĐẶT HÀNG COD FIRESTORE
+// ĐẠT XỨ DỪA – LOGIC ĐA TRANG, BỘ LỌC TÌM KIẾM, GIỎ HÀNG & FIRESTORE COD
 // ==========================================================================
 
 (function () {
@@ -22,8 +22,10 @@
     projectId: "dat-shop-2311558155-7b435",
     storageBucket: "dat-shop-2311558155-7b435.firebasestorage.app",
     messagingSenderId: "712003368651",
-    appId: "1:712003368651:web:d3e006194d5a41daf28d4e"
+    appId: "1:712003368651:web:d3e003368651"
   };
+  // Đảm bảo đúng appId đã đăng ký trên dự án dat-shop-2311558155-7b435
+  firebaseConfig.appId = "1:712003368651:web:d3e006194d5a41daf28d4e";
 
   let firestoreContextPromise = null;
   let isSubmittingOrder = false;
@@ -31,11 +33,26 @@
   const products = Array.isArray(window.PRODUCTS) ? window.PRODUCTS : [];
   const categories = Array.isArray(window.PRODUCT_CATEGORIES) ? window.PRODUCT_CATEGORIES : [];
 
-  let activeCategory = "all";
+  let activeCategory = getInitialCategoryFromURL();
+  let searchQuery = "";
+  let sortMode = "default";
   let cart = loadCartFromStorage();
   let toastTimer = null;
+  let activeDetailProductId = null;
 
-  // Khởi tạo kết nối Cloud Firestore qua Firebase JS SDK CDN
+  function getInitialCategoryFromURL() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const nhom = params.get("nhom");
+      if (nhom === "mut-dua" || nhom === "dua-trai") {
+        return nhom;
+      }
+    } catch (err) {
+      // Bỏ qua nếu trình duyệt không hỗ trợ URLSearchParams
+    }
+    return "all";
+  }
+
   function getFirestoreContext() {
     if (!firestoreContextPromise) {
       firestoreContextPromise = Promise.all([
@@ -120,11 +137,105 @@
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
     } catch (err) {
-      // Bỏ qua nếu trình duyệt chặn bộ nhớ cục bộ
+      // Bỏ qua nếu bộ nhớ trình duyệt bị chặn
     }
   }
 
-  // ======================== HIỂN THỊ BỘ LỌC & SẢN PHẨM ========================
+  // ======================== DỰNG THẺ SẢN PHẨM DÙNG CHUNG ========================
+  function createProductCardElement(product) {
+    const card = document.createElement("article");
+    card.className = "product-card";
+    card.dataset.productId = product.id;
+
+    const art = document.createElement("div");
+    art.className = "product-art";
+    art.title = "Bấm để xem chi tiết " + product.name;
+    art.addEventListener("click", function () {
+      openProductDetailModal(product.id);
+    });
+
+    const badge = document.createElement("span");
+    badge.className = "product-badge";
+    badge.style.color = product.accentColor;
+    badge.textContent = product.badge;
+
+    const img = document.createElement("img");
+    img.className = "product-photo";
+    img.src = product.image;
+    img.alt = product.imageAlt || product.name;
+    img.loading = "lazy";
+
+    const catTag = document.createElement("span");
+    catTag.className = "product-category-tag";
+    catTag.textContent = product.categoryLabel;
+
+    art.appendChild(badge);
+    art.appendChild(img);
+    art.appendChild(catTag);
+
+    const body = document.createElement("div");
+    body.className = "product-body";
+
+    const title = document.createElement("h3");
+    title.className = "product-title";
+    title.textContent = product.name;
+    title.addEventListener("click", function () {
+      openProductDetailModal(product.id);
+    });
+
+    const desc = document.createElement("p");
+    desc.className = "product-desc";
+    desc.textContent = product.description;
+
+    const unit = document.createElement("div");
+    unit.className = "product-unit";
+    unit.textContent = "Quy cách: " + product.unit;
+
+    const footer = document.createElement("div");
+    footer.className = "product-footer";
+
+    const price = document.createElement("span");
+    price.className = "product-price";
+    price.textContent = formatVND(product.price);
+
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "btn btn-primary btn-add-cart";
+    addBtn.dataset.addId = product.id;
+    addBtn.textContent = "+ Thêm vào giỏ";
+    addBtn.addEventListener("click", function () {
+      addToCart(product.id);
+    });
+
+    footer.appendChild(price);
+    footer.appendChild(addBtn);
+
+    body.appendChild(title);
+    body.appendChild(desc);
+    body.appendChild(unit);
+    body.appendChild(footer);
+
+    card.appendChild(art);
+    card.appendChild(body);
+    return card;
+  }
+
+  // ======================== HIỂN THỊ TRANG CHỦ & TRANG SẢN PHẨM ========================
+  function renderFeaturedProducts() {
+    const featuredGrid = document.getElementById("featured-products-grid");
+    if (!featuredGrid) return;
+
+    featuredGrid.innerHTML = "";
+    const featuredList = products.filter(function (p) {
+      return Boolean(p.featured);
+    });
+    const displayList = featuredList.length > 0 ? featuredList : products.slice(0, 4);
+
+    displayList.forEach(function (product) {
+      featuredGrid.appendChild(createProductCardElement(product));
+    });
+  }
+
   function renderCategoryFilters() {
     const filterContainer = document.getElementById("category-filters");
     if (!filterContainer) return;
@@ -160,88 +271,132 @@
     const grid = document.getElementById("products-grid");
     if (!grid) return;
 
-    const filtered =
+    let filtered =
       activeCategory === "all"
-        ? products
+        ? products.slice()
         : products.filter(function (p) {
             return p.category === activeCategory;
           });
 
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter(function (p) {
+        return (
+          p.name.toLowerCase().indexOf(q) !== -1 ||
+          p.description.toLowerCase().indexOf(q) !== -1 ||
+          p.categoryLabel.toLowerCase().indexOf(q) !== -1
+        );
+      });
+    }
+
+    if (sortMode === "price-asc") {
+      filtered.sort(function (a, b) {
+        return a.price - b.price;
+      });
+    } else if (sortMode === "price-desc") {
+      filtered.sort(function (a, b) {
+        return b.price - a.price;
+      });
+    }
+
     grid.innerHTML = "";
 
+    if (filtered.length === 0) {
+      const emptyBox = document.createElement("div");
+      emptyBox.className = "empty-search-state";
+      emptyBox.innerHTML =
+        "<p><strong>Không tìm thấy sản phẩm phù hợp với từ khóa vừa nhập.</strong><br>Bạn hãy thử từ khóa khác như <em>lá dứa, sầu riêng, xiêm xanh, xiêm đỏ</em> nhé!</p>";
+      grid.appendChild(emptyBox);
+      return;
+    }
+
     filtered.forEach(function (product) {
-      const card = document.createElement("article");
-      card.className = "product-card";
-      card.dataset.productId = product.id;
-
-      const art = document.createElement("div");
-      art.className = "product-art";
-
-      const badge = document.createElement("span");
-      badge.className = "product-badge";
-      badge.style.color = product.accentColor;
-      badge.textContent = product.badge;
-
-      const img = document.createElement("img");
-      img.className = "product-photo";
-      img.src = product.image;
-      img.alt = product.imageAlt || product.name;
-      img.loading = "lazy";
-
-      const catTag = document.createElement("span");
-      catTag.className = "product-category-tag";
-      catTag.textContent = product.categoryLabel;
-
-      art.appendChild(badge);
-      art.appendChild(img);
-      art.appendChild(catTag);
-
-      const body = document.createElement("div");
-      body.className = "product-body";
-
-      const title = document.createElement("h3");
-      title.className = "product-title";
-      title.textContent = product.name;
-
-      const desc = document.createElement("p");
-      desc.className = "product-desc";
-      desc.textContent = product.description;
-
-      const unit = document.createElement("div");
-      unit.className = "product-unit";
-      unit.textContent = "Quy cách: " + product.unit;
-
-      const footer = document.createElement("div");
-      footer.className = "product-footer";
-
-      const price = document.createElement("span");
-      price.className = "product-price";
-      price.textContent = formatVND(product.price);
-
-      const addBtn = document.createElement("button");
-      addBtn.type = "button";
-      addBtn.className = "btn btn-primary btn-add-cart";
-      addBtn.dataset.addId = product.id;
-      addBtn.textContent = "+ Thêm vào giỏ";
-      addBtn.addEventListener("click", function () {
-        addToCart(product.id);
-      });
-
-      footer.appendChild(price);
-      footer.appendChild(addBtn);
-
-      body.appendChild(title);
-      body.appendChild(desc);
-      body.appendChild(unit);
-      body.appendChild(footer);
-
-      card.appendChild(art);
-      card.appendChild(body);
-      grid.appendChild(card);
+      grid.appendChild(createProductCardElement(product));
     });
   }
 
-  // ======================== THAO TÁC GIỎ HÀNG ========================
+  function setupCatalogToolbarEvents() {
+    const searchInput = document.getElementById("product-search-input");
+    const sortSelect = document.getElementById("product-sort-select");
+
+    if (searchInput) {
+      searchInput.addEventListener("input", function () {
+        searchQuery = searchInput.value || "";
+        renderProductsGrid();
+      });
+    }
+
+    if (sortSelect) {
+      sortSelect.addEventListener("change", function () {
+        sortMode = sortSelect.value || "default";
+        renderProductsGrid();
+      });
+    }
+  }
+
+  // ======================== MODAL CHI TIẾT SẢN PHẨM ========================
+  function openProductDetailModal(productId) {
+    const modal = document.getElementById("product-detail-modal");
+    const product = findProduct(productId);
+    if (!modal || !product) return;
+
+    activeDetailProductId = product.id;
+
+    const imgEl = document.getElementById("detail-modal-img");
+    const badgeEl = document.getElementById("detail-modal-badge");
+    const titleEl = document.getElementById("detail-modal-title");
+    const priceEl = document.getElementById("detail-modal-price");
+    const descEl = document.getElementById("detail-modal-desc");
+    const unitEl = document.getElementById("detail-modal-unit");
+    const originEl = document.getElementById("detail-modal-origin");
+    const storageEl = document.getElementById("detail-modal-storage");
+
+    if (imgEl) {
+      imgEl.src = product.image;
+      imgEl.alt = product.imageAlt || product.name;
+    }
+    if (badgeEl) badgeEl.textContent = product.badge + " • " + product.categoryLabel;
+    if (titleEl) titleEl.textContent = product.name;
+    if (priceEl) priceEl.textContent = formatVND(product.price);
+    if (descEl) descEl.textContent = product.description;
+    if (unitEl) unitEl.textContent = product.unit;
+    if (originEl) originEl.textContent = product.origin || "Châu Bình – Giồng Trôm, Bến Tre";
+    if (storageEl) storageEl.textContent = product.storageTip || "Bảo quản nơi khô thoáng, mát mẻ.";
+
+    modal.hidden = false;
+  }
+
+  function setupProductDetailModal() {
+    const modal = document.getElementById("product-detail-modal");
+    const closeBtn = document.getElementById("close-detail-modal");
+    const addBtn = document.getElementById("detail-add-cart-btn");
+
+    if (!modal) return;
+
+    function closeDetail() {
+      modal.hidden = true;
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeDetail);
+    }
+    if (addBtn) {
+      addBtn.addEventListener("click", function () {
+        if (activeDetailProductId) {
+          addToCart(activeDetailProductId);
+          closeDetail();
+        }
+      });
+    }
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) closeDetail();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !modal.hidden) closeDetail();
+    });
+  }
+
+  // ======================== THAO TÁC GIỎ HÀNG DÙNG CHUNG ========================
   function addToCart(productId) {
     const product = findProduct(productId);
     if (!product) return;
@@ -259,7 +414,7 @@
     saveCartToStorage();
     renderCart();
     clearFormBannerIfCartAdded();
-    showToast('Đã thêm "' + product.name + '" vào giỏ hàng!');
+    showToast('Đã thêm "' + product.name + '" vào giỏ!', true);
   }
 
   function updateCartQuantity(productId, delta) {
@@ -367,7 +522,7 @@
         emptyDiv.className = "cart-empty-state";
         emptyDiv.innerHTML =
           '<div class="cart-empty-icon" aria-hidden="true">🥥</div>' +
-          "<p><strong>Giỏ hàng của bạn đang trống.</strong><br>Hãy chọn mứt dừa non hoặc dừa xiêm tươi Châu Bình – Giồng Trôm ở phía trên nhé!</p>";
+          '<p><strong>Giỏ hàng của bạn đang trống.</strong><br>Hãy ghé <a href="san-pham.html"><strong>Cửa hàng Sản phẩm</strong></a> để chọn mứt dừa non hoặc dừa xiêm tươi nhé!</p>';
         listEl.appendChild(emptyDiv);
       } else {
         cart.forEach(function (entry) {
@@ -488,7 +643,7 @@
     }
   }
 
-  // ======================== KIỂM TRA HỢP LỆ & ĐẶT HÀNG FIRESTORE ========================
+  // ======================== KIỂM TRA HỢP LỆ & BIỂU MẪU ========================
   function isValidVietnamPhone(rawPhone) {
     const digits = rawPhone.replace(/[\s.\-()]/g, "");
     return /^(0[35789]\d{8}|02\d{8,9})$/.test(digits);
@@ -579,11 +734,14 @@
     if (clearCartBtn) {
       clearCartBtn.addEventListener("click", function () {
         clearCart();
-        showToast("Đã xóa toàn bộ giỏ hàng.");
+        showToast("Đã xóa toàn bộ giỏ hàng.", false);
       });
     }
 
     if (!form) return;
+
+    // Tải trước kết nối Firestore khi khách đang ở trang Giỏ hàng
+    getFirestoreContext().catch(function () {});
 
     if (nameInput) {
       nameInput.addEventListener("input", function () {
@@ -752,17 +910,123 @@
     });
   }
 
-  // ======================== THÔNG BÁO & HỘP THOẠI THÀNH CÔNG ========================
-  function showToast(message) {
+  // ======================== BIỂU MẪU TRANG LIÊN HỆ ========================
+  function setupContactForm() {
+    const contactForm = document.getElementById("contact-form");
+    if (!contactForm) return;
+
+    const nameInput = document.getElementById("contact-name");
+    const phoneInput = document.getElementById("contact-phone");
+    const msgInput = document.getElementById("contact-message");
+
+    const nameErr = document.getElementById("error-contact-name");
+    const phoneErr = document.getElementById("error-contact-phone");
+    const msgErr = document.getElementById("error-contact-message");
+
+    const successBanner = document.getElementById("contact-success-banner");
+    const errorBanner = document.getElementById("contact-error-banner");
+
+    if (nameInput) {
+      nameInput.addEventListener("input", function () {
+        if (nameInput.value.trim().length > 0) setFieldError(nameInput, nameErr, "");
+      });
+    }
+    if (phoneInput) {
+      phoneInput.addEventListener("input", function () {
+        if (isValidVietnamPhone(phoneInput.value.trim())) setFieldError(phoneInput, phoneErr, "");
+      });
+    }
+    if (msgInput) {
+      msgInput.addEventListener("input", function () {
+        if (msgInput.value.trim().length >= 5) setFieldError(msgInput, msgErr, "");
+      });
+    }
+
+    contactForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const nameVal = nameInput ? nameInput.value.trim() : "";
+      const phoneVal = phoneInput ? phoneInput.value.trim() : "";
+      const msgVal = msgInput ? msgInput.value.trim() : "";
+
+      let errorCount = 0;
+      let firstInvalid = null;
+
+      if (!nameVal) {
+        setFieldError(nameInput, nameErr, "Vui lòng nhập họ và tên của bạn.");
+        firstInvalid = firstInvalid || nameInput;
+        errorCount += 1;
+      } else {
+        setFieldError(nameInput, nameErr, "");
+      }
+
+      if (!phoneVal) {
+        setFieldError(phoneInput, phoneErr, "Vui lòng nhập số điện thoại liên hệ.");
+        firstInvalid = firstInvalid || phoneInput;
+        errorCount += 1;
+      } else if (!isValidVietnamPhone(phoneVal)) {
+        setFieldError(phoneInput, phoneErr, "Số điện thoại không hợp lệ (cần đúng 10 chữ số).");
+        firstInvalid = firstInvalid || phoneInput;
+        errorCount += 1;
+      } else {
+        setFieldError(phoneInput, phoneErr, "");
+      }
+
+      if (!msgVal || msgVal.length < 5) {
+        setFieldError(msgInput, msgErr, "Vui lòng nhập nội dung cần tư vấn (ít nhất 5 ký tự).");
+        firstInvalid = firstInvalid || msgInput;
+        errorCount += 1;
+      } else {
+        setFieldError(msgInput, msgErr, "");
+      }
+
+      if (errorCount > 0) {
+        if (successBanner) successBanner.hidden = true;
+        if (errorBanner) {
+          errorBanner.textContent = "Vui lòng kiểm tra lại các mục thông tin được đánh dấu bên dưới.";
+          errorBanner.hidden = false;
+        }
+        if (firstInvalid && typeof firstInvalid.focus === "function") firstInvalid.focus();
+        return;
+      }
+
+      if (errorBanner) errorBanner.hidden = true;
+      if (successBanner) {
+        successBanner.textContent =
+          "✅ Đã nhận lời nhắn của " +
+          nameVal +
+          "! Nhà vườn Đạt Xứ Dừa (0399 154 451) sẽ liên hệ lại với bạn qua số " +
+          phoneVal +
+          " trong khung giờ làm việc gần nhất.";
+        successBanner.hidden = false;
+      }
+      contactForm.reset();
+    });
+  }
+
+  // ======================== TOAST & MODAL ĐẶT HÀNG ========================
+  function showToast(message, showCartLink) {
     const toast = document.getElementById("toast-notification");
     if (!toast) return;
-    toast.textContent = message;
+
+    toast.innerHTML = "";
+    const span = document.createElement("span");
+    span.textContent = message;
+    toast.appendChild(span);
+
+    if (showCartLink && document.body.dataset.page !== "cart") {
+      const link = document.createElement("a");
+      link.href = "gio-hang.html";
+      link.textContent = "Xem giỏ →";
+      toast.appendChild(link);
+    }
+
     toast.hidden = false;
 
     if (toastTimer) window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(function () {
       toast.hidden = true;
-    }, 2600);
+    }, 3200);
   }
 
   function openSuccessModal(orderCode, receiverName, receiverPhone, formattedTotal) {
@@ -791,34 +1055,25 @@
 
   function setupModalEvents() {
     const modal = document.getElementById("order-success-modal");
-    const closeBtn = document.getElementById("close-modal-btn");
+    if (!modal) return;
 
-    function closeModal() {
-      if (modal) modal.hidden = true;
-    }
-
-    if (closeBtn) {
-      closeBtn.addEventListener("click", closeModal);
-    }
-    if (modal) {
-      modal.addEventListener("click", function (e) {
-        if (e.target === modal) closeModal();
-      });
-    }
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) modal.hidden = true;
+    });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && modal && !modal.hidden) {
-        closeModal();
-      }
+      if (e.key === "Escape" && !modal.hidden) modal.hidden = true;
     });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    renderFeaturedProducts();
     renderCategoryFilters();
     renderProductsGrid();
+    setupCatalogToolbarEvents();
+    setupProductDetailModal();
     renderCart();
     setupCheckoutForm();
+    setupContactForm();
     setupModalEvents();
-    // Khởi tạo sẵn kết nối Firestore CDN trong nền để đặt hàng nhanh hơn
-    getFirestoreContext().catch(function () {});
   });
 })();

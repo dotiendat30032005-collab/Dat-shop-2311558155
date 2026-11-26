@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Giỏ hàng và đặt hàng thanh toán khi nhận (COD) tại cửa hàng đặc sản Đạt Xứ Dừa – Châu Bình, Giồng Trôm, Bến Tre.">
+  <title>Giỏ Hàng &amp; Đặt Hàng COD – Đạt Xứ Dừa</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%A5%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="cart">
+  <!-- THANH THÔNG BÁO ĐẦU TRANG -->
+  <div class="top-utility-bar">
+    <div class="container utility-inner">
+      <span>🌾 Cam kết 100% đặc sản nhà vườn Châu Bình – Giồng Trôm, Bến Tre</span>
+      <div class="utility-right">
+        <span>🚚 Miễn phí giao hàng đơn từ 300.000đ</span>
+        <span class="utility-sep" aria-hidden="true">|</span>
+        <a href="tel:0399154451">📞 Hotline/Zalo: 0399 154 451</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ĐẦU TRANG -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand-logo" aria-label="Trang chủ Đạt Xứ Dừa">
+        <span class="brand-emblem" aria-hidden="true">🌴</span>
+        <span class="brand-text">
+          <strong>Đạt Xứ Dừa</strong>
+          <small>Nhà vườn Châu Bình – Giồng Trôm, Bến Tre</small>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="Điều hướng chính">
+        <a href="index.html" class="nav-link">Trang chủ</a>
+        <a href="san-pham.html" class="nav-link">Sản phẩm</a>
+        <a href="chinh-sach.html" class="nav-link">Chính sách</a>
+        <a href="lien-he.html" class="nav-link">Liên hệ</a>
+      </nav>
+
+      <a href="gio-hang.html" class="cart-trigger-btn is-active-cart" id="header-cart-btn" aria-current="page" aria-label="Xem giỏ hàng">
+        <span class="cart-icon" aria-hidden="true">🛒</span>
+        <span class="cart-label">Giỏ hàng</span>
+        <span class="cart-badge" id="cart-count-badge">0</span>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <!-- TIÊU ĐỀ TRANG GIỎ HÀNG -->
+    <section class="subpage-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Đường dẫn trang">
+          <a href="index.html">Trang chủ</a>
+          <span aria-hidden="true">›</span>
+          <span>Giỏ hàng &amp; Đặt hàng COD</span>
+        </nav>
+        <h1>Giỏ Hàng &amp; Thanh Toán Khi Nhận (COD)</h1>
+        <p>Kiểm tra lại danh sách đặc sản đã chọn và điền địa chỉ nhận hàng — đơn hàng được lưu trực tiếp lên hệ thống cửa hàng.</p>
+      </div>
+    </section>
+
+    <!-- KHU VỰC GIỎ HÀNG & ĐẶT HÀNG -->
+    <section class="checkout-section section-block" id="gio-hang" aria-label="Giỏ hàng và biểu mẫu đặt hàng">
+      <div class="container">
+        <div class="checkout-layout">
+          <!-- Cột trái: Giỏ hàng -->
+          <div class="cart-panel card-box">
+            <div class="panel-title-row">
+              <h2>🛒 Giỏ hàng của bạn (<span id="cart-total-items-text">0</span> món)</h2>
+              <button type="button" class="btn-text-danger" id="clear-cart-btn" hidden>Xóa tất cả</button>
+            </div>
+
+            <!-- Thanh tiến độ miễn phí giao hàng -->
+            <div class="freeship-banner" id="freeship-banner" aria-live="polite">
+              <div class="freeship-text" id="freeship-text">
+                Mua đơn từ <strong>300.000đ</strong> để được <strong>Miễn phí giao hàng (0đ)</strong>!
+              </div>
+              <div class="freeship-bar-track" aria-hidden="true">
+                <div class="freeship-bar-fill" id="freeship-bar-fill" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Danh sách sản phẩm trong giỏ -->
+            <div class="cart-items-list" id="cart-items-list">
+              <!-- Render bằng script.js -->
+            </div>
+
+            <div class="continue-shopping-row">
+              <a href="san-pham.html" class="link-arrow">← Chọn thêm đặc sản khác</a>
+            </div>
+
+            <!-- Bảng tính tiền -->
+            <div class="cart-summary" id="cart-summary">
+              <div class="summary-row">
+                <span>Tạm tính:</span>
+                <strong id="subtotal-amount">0đ</strong>
+              </div>
+              <div class="summary-row">
+                <span>Phí giao hàng <small class="ship-note">(miễn phí từ 300.000đ)</small>:</span>
+                <strong id="shipping-amount">0đ</strong>
+              </div>
+              <div class="summary-divider"></div>
+              <div class="summary-row summary-total">
+                <span>Tổng thanh toán:</span>
+                <strong class="total-price" id="total-amount">0đ</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột phải: Form Đặt hàng COD -->
+          <div class="order-panel card-box">
+            <h2>📦 Thông tin nhận hàng</h2>
+            <p class="order-helper-note">Các ô có dấu <span class="required-mark">*</span> là thông tin bắt buộc để bưu tá giao hàng.</p>
+
+            <!-- Thông báo lỗi tổng hợp của biểu mẫu -->
+            <div class="form-alert-error" id="form-error-banner" role="alert" hidden></div>
+
+            <form id="checkout-form" novalidate>
+              <div class="form-group">
+                <label for="customer-name">Họ và tên người nhận <span class="required-mark">*</span></label>
+                <input
+                  type="text"
+                  id="customer-name"
+                  name="customerName"
+                  placeholder="Ví dụ: Nguyễn Văn An"
+                  autocomplete="name"
+                >
+                <p class="field-error" id="error-customer-name" role="alert" hidden></p>
+              </div>
+
+              <div class="form-group">
+                <label for="customer-phone">Số điện thoại liên hệ <span class="required-mark">*</span></label>
+                <input
+                  type="tel"
+                  id="customer-phone"
+                  name="customerPhone"
+                  placeholder="Ví dụ: 0912345678"
+                  inputmode="tel"
+                  autocomplete="tel"
+                >
+                <p class="field-error" id="error-customer-phone" role="alert" hidden></p>
+              </div>
+
+              <div class="form-group">
+                <label for="customer-address">Địa chỉ giao hàng chi tiết <span class="required-mark">*</span></label>
+                <textarea
+                  id="customer-address"
+                  name="customerAddress"
+                  rows="3"
+                  placeholder="Số nhà, tên đường, ấp/khóm, phường/xã, quận/huyện, tỉnh/thành phố"
+                  autocomplete="street-address"
+                ></textarea>
+                <p class="field-error" id="error-customer-address" role="alert" hidden></p>
+              </div>
+
+              <div class="form-group">
+                <label for="customer-note">Ghi chú đơn hàng <span class="optional-label">(không bắt buộc)</span></label>
+                <textarea
+                  id="customer-note"
+                  name="customerNote"
+                  rows="2"
+                  placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao 15 phút..."
+                ></textarea>
+              </div>
+
+              <div class="form-group">
+                <span class="group-label">Phương thức thanh toán</span>
+                <label class="cod-box" for="payment-cod">
+                  <input type="radio" id="payment-cod" name="paymentMethod" value="COD" checked>
+                  <span class="cod-content">
+                    <strong>💵 Thanh toán tiền mặt khi nhận hàng (COD)</strong>
+                    <small>Khách được kiểm tra hàng trước khi thanh toán. Cửa hàng không thu thông tin thẻ hay chuyển khoản trước.</small>
+                  </span>
+                </label>
+              </div>
+
+              <div class="form-group consent-group">
+                <label class="checkbox-label" for="consent-checkbox">
+                  <input type="checkbox" id="consent-checkbox" name="consent">
+                  <span>Tôi đồng ý cho cửa hàng dùng thông tin này để giao hàng <span class="required-mark">*</span></span>
+                </label>
+                <p class="field-error" id="error-consent" role="alert" hidden></p>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block btn-submit-order" id="submit-order-btn">
+                Xác nhận đặt hàng COD (<span id="btn-total-amount">0đ</span>)
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CHÂN TRANG CHUNG -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">🌴 Đạt Xứ Dừa</div>
+        <p>Thương hiệu mứt dừa non sên tay truyền thống và dừa xiêm xanh, dừa xiêm đỏ tươi hái vườn chính gốc Châu Bình – Giồng Trôm, Bến Tre.</p>
+      </div>
+
+      <div class="footer-contact">
+        <h3>Thông tin nhà vườn</h3>
+        <ul>
+          <li>📍 <strong>Địa chỉ:</strong> Ấp Bình An, Xã Châu Bình, Huyện Giồng Trôm, Tỉnh Bến Tre</li>
+          <li>📞 <strong>Điện thoại / Zalo:</strong> <a href="tel:0399154451">0399 154 451</a></li>
+          <li>⏰ <strong>Giờ làm việc:</strong> Thứ 2 – Thứ 6: 08:00 – 17:00</li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h3>Trang thông tin</h3>
+        <ul>
+          <li><a href="index.html">Trang chủ</a></li>
+          <li><a href="san-pham.html">Cửa hàng sản phẩm</a></li>
+          <li><a href="chinh-sach.html">Chính sách giao hàng &amp; Đổi trả</a></li>
+          <li><a href="lien-he.html">Liên hệ &amp; Đặt sỉ</a></li>
+          <li><a href="gio-hang.html">Giỏ hàng &amp; Thanh toán COD</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>© 2026 Cửa hàng <strong>Đạt Xứ Dừa – Châu Bình, Giồng Trôm, Bến Tre</strong>. Thanh toán an toàn khi nhận hàng (COD).</p>
+    </div>
+  </footer>
+
+  <!-- Thông báo nhanh (Toast) -->
+  <div class="toast-notification" id="toast-notification" role="status" aria-live="polite" hidden></div>
+
+  <!-- Hộp thoại xác nhận đặt hàng thành công -->
+  <div class="order-modal-backdrop" id="order-success-modal" role="dialog" aria-modal="true" aria-labelledby="modal-order-title" hidden>
+    <div class="order-modal-card">
+      <div class="modal-success-icon" aria-hidden="true">🎉🥥</div>
+      <h2 id="modal-order-title">Đặt Hàng Thành Công!</h2>
+      <p class="modal-thankyou" id="modal-thankyou-text">
+        Cảm ơn quý khách đã tin tưởng ủng hộ đặc sản Đạt Xứ Dừa Bến Tre!
+      </p>
+      <div class="modal-order-box">
+        <div class="modal-order-row">
+          <span>Mã đơn hàng của bạn:</span>
+          <strong class="order-code-highlight" id="modal-order-code">DXD-000000</strong>
+        </div>
+        <div class="modal-order-row">
+          <span>Người nhận:</span>
+          <strong id="modal-order-receiver">—</strong>
+        </div>
+        <div class="modal-order-row">
+          <span>Tổng thanh toán (COD):</span>
+          <strong class="order-total-highlight" id="modal-order-total">0đ</strong>
+        </div>
+      </div>
+      <p class="modal-subnote">
+        Cửa hàng tại Châu Bình – Giồng Trôm sẽ liên hệ xác nhận đơn trong giờ làm việc (T2–T6, 08:00–17:00) trước khi đóng gói gửi đi. Giỏ hàng của bạn đã được làm mới.
+      </p>
+      <div class="modal-dual-actions">
+        <a href="san-pham.html" class="btn btn-primary btn-block" id="close-modal-btn">Tiếp tục mua sắm</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="products.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
