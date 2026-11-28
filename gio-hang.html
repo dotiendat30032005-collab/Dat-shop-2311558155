@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Giỏ hàng và đặt hàng thanh toán khi nhận (COD) tại cửa hàng đặc sản Đạt Xứ Dừa – Châu Bình, Giồng Trôm, Bến Tre.">
-  <title>Giỏ Hàng &amp; Đặt Hàng COD – Đạt Xứ Dừa</title>
+  <meta name="description" content="Giỏ hàng và đặt mua mứt dừa sợi mỏng sên tay thanh toán khi nhận hàng (COD) tại Chút Ngọt Quê – Châu Bình, Giồng Trôm, Bến Tre.">
+  <title>Giỏ Hàng &amp; Đặt Hàng COD – Chút Ngọt Quê</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A5%A5%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -12,9 +12,9 @@
   <!-- THANH THÔNG BÁO ĐẦU TRANG -->
   <div class="top-utility-bar">
     <div class="container utility-inner">
-      <span>🌾 Cam kết 100% đặc sản nhà vườn Châu Bình – Giồng Trôm, Bến Tre</span>
+      <span>🥥 Mứt dừa sợi mỏng sên tay truyền thống • Châu Bình – Giồng Trôm, Bến Tre</span>
       <div class="utility-right">
-        <span>🚚 Miễn phí giao hàng đơn từ 300.000đ</span>
+        <span>🌿 Không phẩm màu hóa học • Không chất bảo quản</span>
         <span class="utility-sep" aria-hidden="true">|</span>
         <a href="tel:0399154451">📞 Hotline/Zalo: 0399 154 451</a>
       </div>
@@ -24,11 +24,11 @@
   <!-- ĐẦU TRANG -->
   <header class="site-header">
     <div class="container header-inner">
-      <a href="index.html" class="brand-logo" aria-label="Trang chủ Đạt Xứ Dừa">
-        <span class="brand-emblem" aria-hidden="true">🌴</span>
+      <a href="index.html" class="brand-logo" aria-label="Trang chủ Chút Ngọt Quê">
+        <span class="brand-emblem" aria-hidden="true">🥥</span>
         <span class="brand-text">
-          <strong>Đạt Xứ Dừa</strong>
-          <small>Nhà vườn Châu Bình – Giồng Trôm, Bến Tre</small>
+          <strong>Chút Ngọt Quê</strong>
+          <small>Mứt dừa sên tay Châu Bình – Giồng Trôm, Bến Tre</small>
         </span>
       </a>
 
@@ -57,7 +57,7 @@
           <span>Giỏ hàng &amp; Đặt hàng COD</span>
         </nav>
         <h1>Giỏ Hàng &amp; Thanh Toán Khi Nhận (COD)</h1>
-        <p>Kiểm tra lại danh sách đặc sản đã chọn và điền địa chỉ nhận hàng — đơn hàng được lưu trực tiếp lên hệ thống cửa hàng.</p>
+        <p>Kiểm tra lại các gói mứt dừa sợi mỏng đã chọn (200g / 500g / 1kg) và điền thông tin nhận hàng.</p>
       </div>
     </section>
 
@@ -68,18 +68,8 @@
           <!-- Cột trái: Giỏ hàng -->
           <div class="cart-panel card-box">
             <div class="panel-title-row">
-              <h2>🛒 Giỏ hàng của bạn (<span id="cart-total-items-text">0</span> món)</h2>
+              <h2>🛒 Giỏ hàng của bạn (<span id="cart-total-items-text">0</span> gói)</h2>
               <button type="button" class="btn-text-danger" id="clear-cart-btn" hidden>Xóa tất cả</button>
-            </div>
-
-            <!-- Thanh tiến độ miễn phí giao hàng -->
-            <div class="freeship-banner" id="freeship-banner" aria-live="polite">
-              <div class="freeship-text" id="freeship-text">
-                Mua đơn từ <strong>300.000đ</strong> để được <strong>Miễn phí giao hàng (0đ)</strong>!
-              </div>
-              <div class="freeship-bar-track" aria-hidden="true">
-                <div class="freeship-bar-fill" id="freeship-bar-fill" style="width: 0%"></div>
-              </div>
             </div>
 
             <!-- Danh sách sản phẩm trong giỏ -->
@@ -88,22 +78,22 @@
             </div>
 
             <div class="continue-shopping-row">
-              <a href="san-pham.html" class="link-arrow">← Chọn thêm đặc sản khác</a>
+              <a href="san-pham.html" class="link-arrow">← Chọn thêm vị mứt hoặc cỡ gói khác</a>
             </div>
 
             <!-- Bảng tính tiền -->
             <div class="cart-summary" id="cart-summary">
               <div class="summary-row">
-                <span>Tạm tính:</span>
+                <span>Tạm tính tiền mứt:</span>
                 <strong id="subtotal-amount">0đ</strong>
               </div>
               <div class="summary-row">
-                <span>Phí giao hàng <small class="ship-note">(miễn phí từ 300.000đ)</small>:</span>
+                <span>Phí giao hàng toàn quốc:</span>
                 <strong id="shipping-amount">0đ</strong>
               </div>
               <div class="summary-divider"></div>
               <div class="summary-row summary-total">
-                <span>Tổng thanh toán:</span>
+                <span>Tổng thanh toán (COD):</span>
                 <strong class="total-price" id="total-amount">0đ</strong>
               </div>
             </div>
@@ -198,12 +188,12 @@
   <footer class="site-footer">
     <div class="container footer-grid">
       <div class="footer-brand">
-        <div class="footer-logo">🌴 Đạt Xứ Dừa</div>
-        <p>Thương hiệu mứt dừa non sên tay truyền thống và dừa xiêm xanh, dừa xiêm đỏ tươi hái vườn chính gốc Châu Bình – Giồng Trôm, Bến Tre.</p>
+        <div class="footer-logo">🥥 Chút Ngọt Quê</div>
+        <p>Chuyên mứt dừa sợi mỏng sên tay truyền thống không màu và hương lá dứa tươi tự nhiên tại Châu Bình – Giồng Trôm, Bến Tre.</p>
       </div>
 
       <div class="footer-contact">
-        <h3>Thông tin nhà vườn</h3>
+        <h3>Thông tin liên hệ</h3>
         <ul>
           <li>📍 <strong>Địa chỉ:</strong> Ấp Bình An, Xã Châu Bình, Huyện Giồng Trôm, Tỉnh Bến Tre</li>
           <li>📞 <strong>Điện thoại / Zalo:</strong> <a href="tel:0399154451">0399 154 451</a></li>
@@ -215,15 +205,15 @@
         <h3>Trang thông tin</h3>
         <ul>
           <li><a href="index.html">Trang chủ</a></li>
-          <li><a href="san-pham.html">Cửa hàng sản phẩm</a></li>
-          <li><a href="chinh-sach.html">Chính sách giao hàng &amp; Đổi trả</a></li>
-          <li><a href="lien-he.html">Liên hệ &amp; Đặt sỉ</a></li>
-          <li><a href="gio-hang.html">Giỏ hàng &amp; Thanh toán COD</a></li>
+          <li><a href="san-pham.html">Sản phẩm</a></li>
+          <li><a href="chinh-sach.html">Chính sách</a></li>
+          <li><a href="lien-he.html">Liên hệ</a></li>
+          <li><a href="gio-hang.html">Giỏ hàng &amp; Đặt hàng COD</a></li>
         </ul>
       </div>
     </div>
     <div class="container footer-bottom">
-      <p>© 2026 Cửa hàng <strong>Đạt Xứ Dừa – Châu Bình, Giồng Trôm, Bến Tre</strong>. Thanh toán an toàn khi nhận hàng (COD).</p>
+      <p>© 2026 <strong>Chút Ngọt Quê – Châu Bình, Giồng Trôm, Bến Tre</strong>. Thanh toán khi nhận hàng (COD).</p>
     </div>
   </footer>
 
@@ -236,12 +226,12 @@
       <div class="modal-success-icon" aria-hidden="true">🎉🥥</div>
       <h2 id="modal-order-title">Đặt Hàng Thành Công!</h2>
       <p class="modal-thankyou" id="modal-thankyou-text">
-        Cảm ơn quý khách đã tin tưởng ủng hộ đặc sản Đạt Xứ Dừa Bến Tre!
+        Cảm ơn quý khách đã tin tưởng ủng hộ mứt dừa sên tay Chút Ngọt Quê!
       </p>
       <div class="modal-order-box">
         <div class="modal-order-row">
           <span>Mã đơn hàng của bạn:</span>
-          <strong class="order-code-highlight" id="modal-order-code">DXD-000000</strong>
+          <strong class="order-code-highlight" id="modal-order-code">CNQ-000000</strong>
         </div>
         <div class="modal-order-row">
           <span>Người nhận:</span>
@@ -253,7 +243,7 @@
         </div>
       </div>
       <p class="modal-subnote">
-        Cửa hàng tại Châu Bình – Giồng Trôm sẽ liên hệ xác nhận đơn trong giờ làm việc (T2–T6, 08:00–17:00) trước khi đóng gói gửi đi. Giỏ hàng của bạn đã được làm mới.
+        Chút Ngọt Quê (Châu Bình – Giồng Trôm) sẽ liên hệ xác nhận đơn trong giờ làm việc (T2–T6, 08:00–17:00) trước khi đóng gói gửi đi. Giỏ hàng của bạn đã được làm mới.
       </p>
       <div class="modal-dual-actions">
         <a href="san-pham.html" class="btn btn-primary btn-block" id="close-modal-btn">Tiếp tục mua sắm</a>
